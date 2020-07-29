@@ -1,27 +1,110 @@
 # Judge
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.2.2.
+這個專案由**聚樂邦**面試所提供，本Repo完整內容將在面試完後刪除。
 
-## Development server
+## 需求
+--- 
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+- 具有三個投票選項
 
-## Code scaffolding
+- 提供三個不同裝置登入的瀏覽器進行同步功能
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- 系統需偵測哪一個選項票比較多，會把三個瀏覽器都導去該選項的相應頁面；假設三個票數一樣，則會導回原有頁面重新投票。
 
-## Build
+補充
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+> 不需製作登入系統，僅需使用網址參數替代即可；裝置可以任選，但要包含手機；可自由加上情境設定跟UI設計。
 
-## Running unit tests
+## 調整設計
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+因*無*後端系統，暫以使用網址參數替代功能，但也因為如此沒辦法**自動**偵測選票數與導轉結果。
+我將設計一投票畫面，各選項直接導轉至欲呈現之結果畫面。
 
-## Running end-to-end tests
+依據此需求，將建置兩個前端module：
+1. 投票
+投票元件將包含一則問題，與三個選項。
+2. 結果
+結果將依據url內參數做元件替換，顯示三種不同的樣子。
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+## 前端技術 與 頁面說明
 
-## Further help
+本專案由*Angular*建置，我將使用Angular Router，樣式則使用Bootstrap，因本專案規模小，因此雖包含兩個module但其內不再另開次component。
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+我將這次情境設定為一**遊戲票選畫面**，在一系列遊戲過程後，所有玩家將票選兇手，而得到最高票數的人，將是大家認定「吃掉便當」的罪犯(好可惡！)。
+
+### 投票畫面
+
+投票畫面設置基本RWD，不論一般筆電解析度或是手機皆可正常呈現，目前已實測Safari、Chrome與Firefox都能正常呈現畫面。
+按鈕風格參考聚樂邦官網設計；Div邊框含有紅色警示，提醒玩家須盡速投票。
+
+### 結果畫面
+
+結果畫面設計類似拍立得相片風格，配上膠帶風格貼紙；照片背景顏色與膠帶以隨機方式分配class，因此每次載入都會有不同的效果。
+
+### 若有後端站台，會使用的技術
+
+- 在首次(init)時使用非同步方法(asyc)呼叫api向後端得到票數結果，並轉導至結果畫面。
+- 在結果畫面依據後台設計，可使用setInterval定期呼叫API取得最高票數，轉至該畫面，或如為同票則導回投票畫面。
+- 或使用rxjs接後端websocket，直接由後端在票數有變動時，呼叫瀏覽器做對應處理
+
+## 資料庫設計 與 後端API設計
+
+因本職位為前端工作，但我將可行的想法寫在這，有些設計可能還需要*需求討論*才能更明確，因此難免有誤，還請見諒。
+
+### 資料庫
+
+依據本次需求建議資料庫設計如下：
+
+**Suspect**
+
+欄位名稱 | 欄位中文名稱 | 類型 | 說明
+--- | --- | ---
+SuspectID | 嫌疑犯識別碼 | **GUID** | 隨機識別碼，也可設計為流水號
+Suspect_NameCn | 中文名稱 | **nvarchar(20)** | 嫌疑犯的中文稱呼，不考慮極端狀況，長度20即可
+Suspect_Number | 嫌疑犯編號 | **nvarchar(10)** | 不使用int，避免有0號出現，後端可能出錯，並且編號也可有英文
+
+**User**
+
+欄位名稱 | 欄位中文名稱 | 類型 | 說明
+--- | --- | ---
+UserID | 使用者識別碼 | **GUID** | 隨機識別碼，也可設計為流水號
+User_NameCn | 使用者中文名稱 | **nvarchar(20)** | 不考慮極端狀況，長度20即可
+
+**Votes (多對多table)**
+
+欄位名稱 | 欄位中文名稱 | 類型 | 說明
+--- | --- | ---
+VotesID | Votes資料識別碼 | **GUID** | 隨機識別碼，也可設計為流水號
+SuspectID | 嫌疑犯識別碼 | **GUID** | 識別碼
+UserID | 使用者識別碼 | **GUID** | 識別碼
+
+### API
+
+#### Vote_Suspect
+
+說明：
+此API為投票使用，使用者點擊後會將嫌疑犯ID與使用者ID傳至後端，並記錄於Votes，增加一筆投票紀錄。
+
+**Request**
+Method | Url 
+--- | --- 
+Post | api/voteSuspect
+
+Type | Params | Value
+--- | --- | ---
+Post | suspectid | string
+Post | userid | string
+
+#### Get_Result
+
+說明：
+此API為呼叫後端，回傳目前最高票的嫌疑犯使用
+
+**Request**
+Method | Url 
+--- | --- 
+Get | api/getresult
+
+
+
+
