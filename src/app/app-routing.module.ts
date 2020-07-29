@@ -18,6 +18,11 @@ const routes: Routes = [
     path: 'vote',
     component: VoteComponent
   },
+  { 
+    path: '',
+    redirectTo: '/vote', 
+    pathMatch: 'full'
+  },
 ];
 
 @NgModule({
