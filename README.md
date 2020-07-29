@@ -83,7 +83,8 @@ UserID | 使用者識別碼 | **GUID** | 識別碼
 
 使用者點擊後會將嫌疑犯ID與使用者ID傳至後端，並記錄於Votes，增加一筆投票紀錄。
 
-**Request**
+*Request*
+
 Method | Url 
 --- | --- 
 Post | api/voteSuspect
@@ -97,7 +98,8 @@ Post | userid | string
 
 回傳目前最高票的嫌疑犯使用
 
-**Request**
+*Request*
+
 Method | Url 
 --- | --- 
 Get | api/getresult
